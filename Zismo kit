@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Compra</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #f4f7f6; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: white; max-width: 450px; width: 100%; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); padding: 25px; }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
+        .step { display: none; }
+        .active { display: block; }
+        
+        /* Carrito */
+        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .product-info h4 { color: #444; }
+        .product-info span { color: #888; font-size: 0.9em; }
+        .qty-controls button { background: #7d2ae8; color: white; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-weight: bold; }
+        .qty-controls span { margin: 0 10px; font-weight: bold; }
+        .cart-total { display: flex; justify-content: space-between; margin-top: 20px; font-size: 1.2em; font-weight: bold; color: #333; border-top: 2px solid #7d2ae8; padding-top: 15px; }
+        
+        /* Formulario de Pago */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.9em; color: #666; margin-bottom: 5px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1em; }
+        .inline-fields { display: flex; gap: 10px; }
+        
+        /* Botones */
+        .btn { width: 100%; background: #7d2ae8; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1em; font-weight: bold; cursor: pointer; margin-top: 15px; transition: background 0.3s; }
+        .btn:hover { background: #621bc2; }
+        
+        /* Comprobante */
+        .receipt { text-align: center; background: #eef9f5; border: 2px dashed #2ecc71; border-radius: 8px; padding: 20px; margin-top: 15px; }
+        .receipt-icon { font-size: 3em; color: #2ecc71; margin-bottom: 10px; }
+        .receipt-details { text-align: left; margin-top: 15px; font-size: 0.95em; color: #444; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- PASO 1: EL CARRITO -->
+    <div id="step-cart" class="step active">
+        <h2>🛒 Simulador de Carrito</h2>
+        
+        <!-- Producto 1: Kit zismo ($210.000) -->
+        <div class="product-item">
+            <div class="product-info">
+                <h4>Kit zismo</h4>
+                <span>$210.000 COP</span>
+            </div>
+            <div class="qty-controls">
+                <button onclick="changeQty('p1', -1)">-</button>
+                <span id="qty-p1">0</span>
+                <button onclick="changeQty('p1', 1)">+</button>
+            </div>
+        </div>
+
+        <!-- Producto 2: $60.000 -->
+        <div class="product-item">
+            <div class="product-info">
+                <h4>Producto Estándar</h4>
+                <span>$60.000 COP</span>
+            </div>
+            <div class="qty-controls">
+                <button onclick="changeQty('p2', -1)">-</button>
+                <span id="qty-p2">0</span>
+                <button onclick="changeQty('p2', 1)">+</button>
+            </div>
+        </div>
+
+        <!-- Producto 3: $100.000 -->
+        <div class="product-item">
+            <div class="product-info">
+                <h4>Producto Básico</h4>
+                <span>$100.000 COP</span>
+            </div>
+            <div class="qty-controls">
+                <button onclick="changeQty('p3', -1)">-</button>
+                <span id="qty-p3">0</span>
+                <button onclick="changeQty('p3', 1)">+</button>
+            </div>
+        </div>
+
+        <div class="cart-total">
+            <span>Total:</span>
+            <span>$<span id="cart-total-val">0</span> COP</span>
+        </div>
+        <button class="btn" onclick="goToPayment()">Proceder al Pago Ficticio</button>
+    </div>
+
+    <!-- PASO 2: PASARELA FALSA -->
+    <div id="step-payment" class="step">
+        <h2>💳 Pasarela de Pago (Simulación)</h2>
+        <div class="form-group">
+            <label>Número de Tarjeta</label>
+            <input type="text" placeholder="4532 0000 0000 0000" maxlength="19">
+        </div>
+        <div class="inline-fields">
+            <div class="form-group" style="flex: 2;">
+                <label>Vencimiento</label>
+                <input type="text" placeholder="MM/AA" maxlength="5">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>CVC</label>
+                <input type="password" placeholder="123" maxlength="3">
+            </div>
+        </div>
+        <button class="btn" onclick="processPayment()">Pagar $<span id="pay-total-val">0</span> COP</button>
+    </div>
+
+    <!-- PASO 3: COMPROBANTE -->
+    <div id="step-receipt" class="step">
+        <h2>🧾 Comprobante Generado</h2>
+        <div class="receipt">
+            <div class="receipt-icon">✅</div>
+            <h3>¡Simulación Exitosa!</h3>
+            <p style="color: #666; font-size: 0.9em;">El dinero es ficticio, no se procesó ningún cargo.</p>
+            
+            <div class="receipt-details">
+                <p><strong>Nro. Transacción:</strong> <span id="rec-tx"></span></p>
+                <p><strong>Fecha:</strong> <span id="rec-date"></span></p>
+                <p><strong>Artículos comprados:</strong> <span id="rec-items"></span></p>
+                <p><strong>Total "Pagado":</strong> $<span id="rec-total"></span> COP</p>
+            </div>
+        </div>
+        <button class="btn" onclick="resetSim()">Simular de nuevo</button>
+    </div>
+</div>
+
+<script>
+    // Configuración con el Kit zismo
+    let cart = { 
+        p1: { qty: 0, price: 210000, name: "Kit zismo" }, 
+        p2: { qty: 0, price: 60000, name: "Producto Estándar" },
+        p3: { qty: 0, price: 100000, name: "Producto Básico" }
+    };
+    let totalGlobal = 0;
+
+    function changeQty(id, val) {
+        let newQty = cart[id].qty + val;
+        if (newQty >= 0) {
+            cart[id].qty = newQty;
+            document.getElementById('qty-' + id).innerText = newQty;
+            calculateTotal();
+        }
+    }
+
+    function calculateTotal() {
+        totalGlobal = (cart.p1.qty * cart.p1.price) + (cart.p2.qty * cart.p2.price) + (cart.p3.qty * cart.p3.price);
+        let formattedTotal = totalGlobal.toLocaleString('es-CO');
+        document.getElementById('cart-total-val').innerText = formattedTotal;
+        document.getElementById('pay-total-val').innerText = formattedTotal;
+    }
+
+    function goToPayment() {
+        if(totalGlobal === 0) return alert("Por favor, agrega al menos un producto al carrito.");
+        showStep('step-payment');
+    }
+
+    function processPayment() {
+        document.getElementById('rec-tx').innerText = "TX-" + Math.floor(100000 + Math.random() * 900000);
+        document.getElementById('rec-date').innerText = new Date().toLocaleString();
+        document.getElementById('rec-total').innerText = totalGlobal.toLocaleString('es-CO');
+        
+        let itemsSummary = [];
+        if(cart.p1.qty > 0) itemsSummary.push(`${cart.p1.qty}x ${cart.p1.name}`);
+        if(cart.p2.qty > 0) itemsSummary.push(`${cart.p2.qty}x ${cart.p2.name}`);
+        if(cart.p3.qty > 0) itemsSummary.push(`${cart.p3.qty}x ${cart.p3.name}`);
+        document.getElementById('rec-items').innerText = itemsSummary.join(', ');
+
+        showStep('step-receipt');
+    }
+
+    function showStep(stepId) {
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById(stepId).classList.add('active');
+    }
+
+    function resetSim() {
+        cart.p1.qty = 0; cart.p2.qty = 0; cart.p3.qty = 0;
+        document.getElementById('qty-p1').innerText = 0;
+        document.getElementById('qty-p2').innerText = 0;
+        document.getElementById('qty-p3').innerText = 0;
+        calculateTotal();
+        showStep('step-cart');
+    }
+</script>
+</body>
+</html>
+
